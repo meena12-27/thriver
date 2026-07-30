@@ -37,6 +37,7 @@ class _HomePageState extends State<HomePage> {
   List<dynamic> malls = [];
 int selectedMallId = 1;
 List<dynamic> parkingMap = [];
+int selectedFloor = 1;
 
   @override
   void initState() {
@@ -332,6 +333,7 @@ loadParkingMap();
 ),
 
 
+
       const SizedBox(height: 20),
       const Text(
   "🗺️ Parking Map",
@@ -340,7 +342,40 @@ loadParkingMap();
     fontWeight: FontWeight.bold,
   ),
 ),
+DropdownButton<int>(
 
+  value: selectedFloor,
+
+  items: [1, 2].map(
+    (floor) {
+
+      return DropdownMenuItem<int>(
+        value: floor,
+
+        child: Text(
+          "Floor $floor",
+        ),
+
+      );
+
+    },
+
+  ).toList(),
+
+
+  onChanged: (value) {
+
+    if (value != null) {
+
+      setState(() {
+        selectedFloor = value;
+      });
+
+    }
+
+  },
+
+),
 
 const SizedBox(height: 10),
 
@@ -348,16 +383,17 @@ const SizedBox(height: 10),
 Card(
   elevation: 4,
 
-  child: Padding(
-    padding: const EdgeInsets.all(15),
+  child: SizedBox(
+    height: 350,
 
-    child: Wrap(
+    child: Stack(
 
-      spacing: 12,
-      runSpacing: 12,
-
-      children: parkingMap.map<Widget>((slot) {
-
+      children: parkingMap
+        .where(
+          (slot) =>
+              slot["floor"] == selectedFloor,
+        )
+        .map<Widget>((slot) {
         Color color;
 
         if (slot["status"] == "available") {
@@ -375,24 +411,40 @@ Card(
         }
 
 
-        return Container(
+        return Positioned(
 
-          width: 70,
-          height: 55,
+          left: (slot["x"] * 8.0) - 20,
+top: (slot["y"] * 6.0) - 20,
 
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(8),
-          ),
 
-          child: Center(
-            child: Text(
-              slot["slot"],
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+          child: Container(
+
+            width: 60,
+            height: 45,
+
+
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius:
+                  BorderRadius.circular(8),
             ),
+
+
+            child: Center(
+
+              child: Text(
+                slot["slot"],
+
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight:
+                      FontWeight.bold,
+                ),
+
+              ),
+
+            ),
+
           ),
 
         );
