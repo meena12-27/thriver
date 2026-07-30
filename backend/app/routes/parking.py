@@ -82,8 +82,17 @@ def recommend_slot(db: Session = Depends(get_db)):
             nearest_slot = slot
 
     return {
-        "recommended_slot": nearest_slot.slot_number,
+    "mall": nearest_slot.mall.name,
+    "parking": {
+        "slot": nearest_slot.slot_number,
         "floor": nearest_slot.floor,
-        "distance": round(shortest_distance, 2),
-        "reason": "Nearest available parking slot"
-    }
+        "zone": nearest_slot.zone
+    },
+    "distance": round(shortest_distance, 2),
+    "navigation": [
+        "Enter main entrance",
+        f"Go to Floor {nearest_slot.floor}",
+        f"Park at Slot {nearest_slot.slot_number}"
+    ],
+    "message": f"Your recommended parking slot is {nearest_slot.slot_number}"
+}
