@@ -80,8 +80,24 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
 
       appBar: AppBar(
-        title: const Text("Thriver"),
+  title: const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        "🚗 Thriver",
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+        ),
       ),
+      Text(
+        "Smart Parking Assistant",
+        style: TextStyle(
+          fontSize: 12,
+        ),
+      ),
+    ],
+  ),
+),
 
 
       body: recommendation == null
@@ -92,125 +108,218 @@ class _HomePageState extends State<HomePage> {
 
 
           : Padding(
+  padding: const EdgeInsets.all(20),
 
-              padding: const EdgeInsets.all(20),
+  child: ListView(
 
-              child: Column(
+    children: [
 
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+      Card(
+        elevation: 4,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
 
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
 
-                children: [
+            children: [
 
-                  const Text(
-                    "Nearby Mall",
-                    style: TextStyle(
-                      fontSize:18,
-                      color:Colors.grey,
-                    ),
-                  ),
-
-
-                  Text(
-                    recommendation!["mall"]??'Loading..',
-                    style: const TextStyle(
-                      fontSize:28,
-                      fontWeight:FontWeight.bold,
-                    ),
-                  ),
-
-
-                  const SizedBox(height:30),
-
-
-                  if (availability != null)
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.local_parking),
-                        title: const Text(
-                          "Available Parking",
-                        ),
-                        subtitle: Text(
-                          "${availability!["slots"].length} slots available",
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                        Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-
-                          const Text(
-                            "⭐ Recommended Parking",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          Text(
-                            "${recommendation!["parking"]["slot"]}"
-                            " • Floor "
-                            "${recommendation!["parking"]["floor"]}"
-                            " • "
-                            "${recommendation!["parking"]["zone"]??'Unknown'}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                            ),
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          Text(
-                            "Distance: ${recommendation!["distance"]??0} m",
-                          ),
-
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                    const Text(
-                      "🧭 Navigation",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    ...recommendation!["navigation"]
-                        .map<Widget>(
-                          (step) => Text(
-                            "→ $step",
-                          ),
-                        )
-                        .toList(),
-
-                        const SizedBox(height: 20),
-
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        loadRecommendation();
-                        loadAvailability();
-                      },
-                      icon: const Icon(Icons.refresh),
-                      label: const Text("Refresh Parking"),
-                    ),
-
-
-                ],
-
+              const Text(
+                "🏬 Nearby Mall",
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey,
+                ),
               ),
 
+              const SizedBox(height: 8),
+
+              Text(
+                recommendation!["mall"] ?? "Loading...",
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const Text(
+                "Smart Parking Assistant",
+                style: TextStyle(
+                  color: Colors.grey,
+                ),
+              ),
+
+            ],
+          ),
+        ),
+      ),
+
+
+      const SizedBox(height: 20),
+
+
+      if (availability != null)
+
+        Card(
+  elevation: 4,
+
+  child: ListTile(
+
+    leading: Icon(
+      Icons.local_parking,
+      color: availability!["slots"].length > 5
+          ? Colors.green
+          : availability!["slots"].length > 0
+              ? Colors.orange
+              : Colors.red,
+      size: 35,
+    ),
+
+    title: const Text(
+      "Available Parking",
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+
+    subtitle: Text(
+      availability!["slots"].length > 5
+          ? "🟢 ${availability!["slots"].length} slots ready"
+          : availability!["slots"].length > 0
+              ? "🟠 ${availability!["slots"].length} slots ready"
+              : "🔴 No slots available",
+    ),
+
+  ),
+),
+
+
+
+      const SizedBox(height: 20),
+
+
+      Card(
+  elevation: 6,
+  color: Colors.blue.shade50,
+
+  child: Padding(
+    padding: const EdgeInsets.all(20),
+
+    child: Column(
+
+      crossAxisAlignment:
+          CrossAxisAlignment.center,
+
+      children: [
+
+        const Text(
+          "⭐ YOUR PARKING SPOT",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+
+        const SizedBox(height: 15),
+
+
+        Text(
+          recommendation!["parking"]["slot"],
+          style: const TextStyle(
+            fontSize: 45,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
+
+
+        const SizedBox(height: 10),
+
+
+        Text(
+          "Floor ${recommendation!["parking"]["floor"]}",
+          style: const TextStyle(
+            fontSize: 18,
+          ),
+        ),
+
+
+        Text(
+          "${recommendation!["parking"]["zone"]} Zone",
+          style: const TextStyle(
+            fontSize: 18,
+          ),
+        ),
+
+
+        const SizedBox(height: 12),
+
+
+        Text(
+          "📍 ${recommendation!["distance"]} m away",
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+      ],
+    ),
+  ),
+),
+
+
+      const SizedBox(height: 20),
+
+
+      const Text(
+        "🧭 Route",
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+
+
+      ...recommendation!["navigation"]
+          .map<Widget>(
+            (step) => Padding(
+              padding:
+                  const EdgeInsets.only(top: 5),
+
+              child: Text(
+                step,
+                style: const TextStyle(
+                  fontSize: 16,
+                ),
+              ),
             ),
+          )
+          .toList(),
+
+
+      const SizedBox(height: 20),
+
+
+      ElevatedButton.icon(
+
+        onPressed: () {
+          loadRecommendation();
+          loadAvailability();
+        },
+
+        icon: const Icon(Icons.refresh),
+
+        label: const Text(
+          "Refresh Parking",
+        ),
+
+      ),
+
+    ],
+  ),
+)
 
     );
 
