@@ -9,5 +9,8 @@ class ParkingSlot(Base):
     slot_number = Column(String)
     floor = Column(Integer)
     status = Column(String)
+    
+    x_coordinate = Column(Integer)
+    y_coordinate = Column(Integer)
 
     mall_id = Column(Integer, ForeignKey("malls.id"))
