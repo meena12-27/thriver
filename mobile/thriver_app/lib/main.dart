@@ -36,6 +36,7 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? availability;
   List<dynamic> malls = [];
 int selectedMallId = 1;
+List<dynamic> parkingMap = [];
 
   @override
   void initState() {
@@ -44,6 +45,7 @@ int selectedMallId = 1;
     loadMalls();
 loadRecommendation();
 loadAvailability();
+loadParkingMap();
 
     timer = Timer.periodic(
       const Duration(seconds: 10),
@@ -75,6 +77,16 @@ loadAvailability();
     });
 
   }
+  void loadParkingMap() async {
+
+  final data =
+      await ApiService.getParkingMap(selectedMallId);
+
+  setState(() {
+    parkingMap = data;
+  });
+
+}
   void loadMalls() async {
 
   final data =
@@ -157,6 +169,7 @@ loadAvailability();
 
               loadRecommendation();
               loadAvailability();
+              loadParkingMap();
             }
 
           },
@@ -320,7 +333,80 @@ loadAvailability();
 
 
       const SizedBox(height: 20),
+      const Text(
+  "🗺️ Parking Map",
+  style: TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+  ),
+),
 
+
+const SizedBox(height: 10),
+
+
+Card(
+  elevation: 4,
+
+  child: Padding(
+    padding: const EdgeInsets.all(15),
+
+    child: Wrap(
+
+      spacing: 12,
+      runSpacing: 12,
+
+      children: parkingMap.map<Widget>((slot) {
+
+        Color color;
+
+        if (slot["status"] == "available") {
+          color = Colors.green;
+        } else {
+          color = Colors.red;
+        }
+
+
+        if (
+          recommendation != null &&
+          recommendation!["parking"]["slot"] == slot["slot"]
+        ) {
+          color = Colors.blue;
+        }
+
+
+        return Container(
+
+          width: 70,
+          height: 55,
+
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(8),
+          ),
+
+          child: Center(
+            child: Text(
+              slot["slot"],
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+        );
+
+      }).toList(),
+
+    ),
+
+  ),
+
+),
+
+
+const SizedBox(height: 20),
 
       const Text(
         "🧭 Route",

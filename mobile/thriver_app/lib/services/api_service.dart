@@ -71,4 +71,27 @@ static Future<List<dynamic>> getMalls() async {
 
   }
 }
+static Future<List<dynamic>> getParkingMap(
+    int mallId
+) async {
+
+  final response = await http.get(
+    Uri.parse(
+      "$baseUrl/parking/map?mall_id=$mallId",
+    ),
+  );
+
+
+  if (response.statusCode == 200) {
+
+    return json.decode(response.body);
+
+  } else {
+
+    throw Exception(
+      "Failed to load parking map"
+    );
+
+  }
+}
 }

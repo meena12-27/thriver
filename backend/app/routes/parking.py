@@ -110,3 +110,29 @@ def recommend_slot(
     ],
     "message": f"Your recommended parking slot is {nearest_slot.slot_number}"
 }
+
+@router.get("/parking/map")
+def parking_map(
+    mall_id: int = 1,
+    db: Session = Depends(get_db)
+):
+
+    slots = (
+        db.query(ParkingSlot)
+        .filter(
+            ParkingSlot.mall_id == mall_id
+        )
+        .all()
+    )
+
+    return [
+        {
+            "slot": slot.slot_number,
+            "floor": slot.floor,
+            "status": slot.status,
+            "zone": slot.zone,
+            "x": slot.x_coordinate,
+            "y": slot.y_coordinate
+        }
+        for slot in slots
+    ]
