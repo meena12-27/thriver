@@ -6,6 +6,7 @@ from app.database import Base
 
 from app.routes import parking
 from app.routes import malls
+from app.models.parking_slot import ParkingSlot
 
 Base.metadata.create_all(bind=engine)
 
