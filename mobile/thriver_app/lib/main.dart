@@ -33,18 +33,20 @@ class _HomePageState extends State<HomePage> {
 
   Map<String, dynamic>? recommendation;
   Timer? timer;
-
+  Map<String, dynamic>? availability;
 
   @override
   void initState() {
     super.initState();
 
     loadRecommendation();
+    loadAvailability();
 
     timer = Timer.periodic(
       const Duration(seconds: 10),
       (Timer t) {
         loadRecommendation();
+        loadAvailability();
       },
     );
   }
@@ -57,6 +59,16 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       recommendation = data;
+    });
+
+  }
+  void loadAvailability() async {
+
+    final data =
+        await ApiService.getAvailableSlots();
+
+    setState(() {
+      availability = data;
     });
 
   }
@@ -101,7 +113,7 @@ class _HomePageState extends State<HomePage> {
 
 
                   Text(
-                    recommendation!["mall"],
+                    recommendation!["mall"]??'Loading..',
                     style: const TextStyle(
                       fontSize:28,
                       fontWeight:FontWeight.bold,
@@ -112,33 +124,86 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height:30),
 
 
-                  Card(
+                  if (availability != null)
+                    Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.local_parking),
+                        title: const Text(
+                          "Available Parking",
+                        ),
+                        subtitle: Text(
+                          "${availability!["slots"].length} slots available",
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
 
-                    child: ListTile(
+                        Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
 
-                      leading:
-                          const Icon(Icons.local_parking),
-
-
-                      title:
                           const Text(
-                            "Recommended Parking",
+                            "⭐ Recommended Parking",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
 
+                          const SizedBox(height: 10),
 
-                      subtitle: Text(
+                          Text(
+                            "${recommendation!["parking"]["slot"]}"
+                            " • Floor "
+                            "${recommendation!["parking"]["floor"]}"
+                            " • "
+                            "${recommendation!["parking"]["zone"]??'Unknown'}",
+                            style: const TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
 
-                        "${recommendation!["parking"]["slot"]}"
-                        " • Floor "
-                        "${recommendation!["parking"]["floor"]}"
-                        " • "
-                        "${recommendation!["parking"]["zone"]}",
+                          const SizedBox(height: 10),
 
+                          Text(
+                            "Distance: ${recommendation!["distance"]??0} m",
+                          ),
+
+                        ],
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
 
+                    const Text(
+                      "🧭 Navigation",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
 
-                  ),
+                    ...recommendation!["navigation"]
+                        .map<Widget>(
+                          (step) => Text(
+                            "→ $step",
+                          ),
+                        )
+                        .toList(),
+
+                        const SizedBox(height: 20),
+
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        loadRecommendation();
+                        loadAvailability();
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text("Refresh Parking"),
+                    ),
 
 
                 ],
