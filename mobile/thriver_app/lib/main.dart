@@ -34,13 +34,16 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? recommendation;
   Timer? timer;
   Map<String, dynamic>? availability;
+  List<dynamic> malls = [];
+int selectedMallId = 1;
 
   @override
   void initState() {
     super.initState();
 
-    loadRecommendation();
-    loadAvailability();
+    loadMalls();
+loadRecommendation();
+loadAvailability();
 
     timer = Timer.periodic(
       const Duration(seconds: 10),
@@ -55,7 +58,7 @@ class _HomePageState extends State<HomePage> {
   void loadRecommendation() async {
 
     final data =
-        await ApiService.getRecommendation();
+        await ApiService.getRecommendation(selectedMallId);
 
     setState(() {
       recommendation = data;
@@ -65,13 +68,23 @@ class _HomePageState extends State<HomePage> {
   void loadAvailability() async {
 
     final data =
-        await ApiService.getAvailableSlots();
+        await ApiService.getAvailableSlots(selectedMallId);
 
     setState(() {
       availability = data;
     });
 
   }
+  void loadMalls() async {
+
+  final data =
+      await ApiService.getMalls();
+
+  setState(() {
+    malls = data;
+  });
+
+}
 
 
   @override
@@ -100,7 +113,7 @@ class _HomePageState extends State<HomePage> {
 ),
 
 
-      body: recommendation == null
+      body: recommendation == null || recommendation!['parking'] == null
 
           ? const Center(
               child: CircularProgressIndicator(),
@@ -113,6 +126,42 @@ class _HomePageState extends State<HomePage> {
   child: ListView(
 
     children: [
+      if (malls.isNotEmpty)
+
+        DropdownButton<int>(
+
+          value: selectedMallId,
+
+          items: malls.map<DropdownMenuItem<int>>(
+            (mall) {
+
+              return DropdownMenuItem<int>(
+                value: mall["id"],
+
+                child: Text(
+                  mall["name"],
+                ),
+              );
+
+            },
+          ).toList(),
+
+
+          onChanged: (value) {
+
+            if (value != null) {
+
+              setState(() {
+                selectedMallId = value;
+              });
+
+              loadRecommendation();
+              loadAvailability();
+            }
+
+          },
+
+        ),
 
       Card(
         elevation: 4,
@@ -225,7 +274,7 @@ class _HomePageState extends State<HomePage> {
 
 
         Text(
-          recommendation!["parking"]["slot"],
+          recommendation!["parking"]["slot"]??'N/A',
           style: const TextStyle(
             fontSize: 45,
             fontWeight: FontWeight.bold,
@@ -238,7 +287,7 @@ class _HomePageState extends State<HomePage> {
 
 
         Text(
-          "Floor ${recommendation!["parking"]["floor"]}",
+          "Floor ${recommendation!["parking"]["floor"]??'N/A'}",
           style: const TextStyle(
             fontSize: 18,
           ),
@@ -246,7 +295,7 @@ class _HomePageState extends State<HomePage> {
 
 
         Text(
-          "${recommendation!["parking"]["zone"]} Zone",
+          "${recommendation!["parking"]["zone"]??'N/A'} Zone",
           style: const TextStyle(
             fontSize: 18,
           ),
@@ -257,7 +306,7 @@ class _HomePageState extends State<HomePage> {
 
 
         Text(
-          "📍 ${recommendation!["distance"]} m away",
+          "📍 ${recommendation!["distance"]??0} m away",
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,

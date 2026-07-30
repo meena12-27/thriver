@@ -15,13 +15,20 @@ def get_db():
     finally:
         db.close()
 
+from fastapi import Query
 
 @router.get("/parking/available")
-def get_available_slots(db: Session = Depends(get_db)):
+def get_available_slots(
+    mall_id: int = Query(1),
+    db: Session = Depends(get_db)
+):
 
     slots = (
         db.query(ParkingSlot)
-        .filter(ParkingSlot.status == "available")
+        .filter(
+            ParkingSlot.status == "available",
+            ParkingSlot.mall_id == mall_id
+        )
         .all()
     )
 
@@ -50,17 +57,23 @@ def get_available_slots(db: Session = Depends(get_db)):
 
 import math
 
+from fastapi import Query
 
 @router.get("/parking/recommend")
-def recommend_slot(db: Session = Depends(get_db)):
+def recommend_slot(
+    mall_id: int = Query(1),
+    db: Session = Depends(get_db)
+):
 
-    # User enters mall from entrance
-    user_x = 5
-    user_y = 5
+    user_x = 0
+    user_y = 0
 
     slots = (
         db.query(ParkingSlot)
-        .filter(ParkingSlot.status == "available")
+        .filter(
+            ParkingSlot.status == "available",
+            ParkingSlot.mall_id == mall_id
+        )
         .all()
     )
 

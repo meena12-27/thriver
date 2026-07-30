@@ -8,10 +8,14 @@ class ApiService {
       "http://127.0.0.1:8000";
 
 
-  static Future<Map<String, dynamic>> getRecommendation() async {
+  static Future<Map<String, dynamic>> getRecommendation(
+    int mallId
+) async {
 
     final response = await http.get(
-      Uri.parse("$baseUrl/parking/recommend"),
+      Uri.parse(
+        "$baseUrl/parking/recommend?mall_id=$mallId",
+      ),
     );
 
 
@@ -27,10 +31,11 @@ class ApiService {
 
     }
   }
-  static Future<Map<String, dynamic>> getAvailableSlots() async {
-
+static Future<Map<String, dynamic>> getAvailableSlots(
+    int mallId
+) async {
     final response = await http.get(
-        Uri.parse("$baseUrl/parking/available"),
+        Uri.parse("$baseUrl/parking/available?mall_id=$mallId"),
     );
 
     if (response.statusCode == 200) {
@@ -46,5 +51,24 @@ class ApiService {
         );
 
     }
+}
+static Future<List<dynamic>> getMalls() async {
+
+  final response = await http.get(
+    Uri.parse("$baseUrl/malls"),
+  );
+
+
+  if (response.statusCode == 200) {
+
+    return json.decode(response.body);
+
+  } else {
+
+    throw Exception(
+      "Failed to load malls"
+    );
+
+  }
 }
 }
