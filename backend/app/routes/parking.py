@@ -54,8 +54,9 @@ import math
 @router.get("/parking/recommend")
 def recommend_slot(db: Session = Depends(get_db)):
 
-    user_x = 0
-    user_y = 0
+    # User enters mall from entrance
+    user_x = 5
+    user_y = 5
 
     slots = (
         db.query(ParkingSlot)

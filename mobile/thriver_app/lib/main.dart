@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'services/api_service.dart';
+import 'dart:async';
 
 void main() {
   runApp(const ThriverApp());
@@ -31,12 +32,21 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
 
   Map<String, dynamic>? recommendation;
+  Timer? timer;
 
 
   @override
   void initState() {
     super.initState();
+
     loadRecommendation();
+
+    timer = Timer.periodic(
+      const Duration(seconds: 10),
+      (Timer t) {
+        loadRecommendation();
+      },
+    );
   }
 
 
@@ -139,5 +149,10 @@ class _HomePageState extends State<HomePage> {
 
     );
 
+  }
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
   }
 }
