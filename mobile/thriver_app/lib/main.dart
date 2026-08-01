@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'services/api_service.dart';
 import 'dart:async';
 
+import 'models/mall.dart';
+import 'models/parking_slot.dart';
+import 'models/recommendation.dart';
 void main() {
   runApp(const ThriverApp());
 }
@@ -31,13 +34,22 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
 
-  Map<String, dynamic>? recommendation;
-  Timer? timer;
-  Map<String, dynamic>? availability;
-  List<dynamic> malls = [];
+  Recommendation? recommendation;
+
+String? errorMessage;
+Timer? timer;
+
+List<ParkingSlot> availability = [];
+
+List<Mall> malls = [];
+
 int selectedMallId = 1;
-List<dynamic> parkingMap = [];
+
+List<ParkingSlot> parkingMap = [];
+
 int selectedFloor = 1;
+ParkingSlot? selectedSlot;
+bool showAvailableOnly = false;
 
   @override
   void initState() {
@@ -60,6 +72,12 @@ loadParkingMap();
 
   void loadRecommendation() async {
 
+  try {
+
+    setState(() {
+      errorMessage = null;
+    });
+
     final data =
         await ApiService.getRecommendation(selectedMallId);
 
@@ -67,7 +85,16 @@ loadParkingMap();
       recommendation = data;
     });
 
+  } catch (e) {
+
+    setState(() {
+      errorMessage =
+          "Unable to connect to parking server";
+    });
+
   }
+
+}
   void loadAvailability() async {
 
     final data =
@@ -106,31 +133,139 @@ loadParkingMap();
     return Scaffold(
 
       appBar: AppBar(
+  elevation: 2,
+
   title: const Column(
     crossAxisAlignment: CrossAxisAlignment.start,
+
     children: [
+
+      Text(
+        "Good Morning 👋",
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.white70,
+        ),
+      ),
+
+
       Text(
         "🚗 Thriver",
         style: TextStyle(
+          fontSize: 24,
           fontWeight: FontWeight.bold,
         ),
       ),
-      Text(
-        "Smart Parking Assistant",
-        style: TextStyle(
-          fontSize: 12,
-        ),
-      ),
+
+
     ],
+
   ),
+
+  actions: [
+
+    Padding(
+      padding: EdgeInsets.only(right: 16),
+
+      child: CircleAvatar(
+        backgroundColor: Colors.white,
+
+        child: Icon(
+          Icons.person,
+          color: Colors.blue,
+        ),
+
+      ),
+
+    ),
+
+  ],
+
 ),
 
 
-      body: recommendation == null || recommendation!['parking'] == null
+      body: errorMessage != null
 
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+    ? Center(
+
+        child: Column(
+
+          mainAxisAlignment:
+              MainAxisAlignment.center,
+
+          children: [
+
+            const Icon(
+              Icons.cloud_off,
+              size: 60,
+              color: Colors.red,
+            ),
+
+            const SizedBox(height: 20),
+
+            Text(
+              errorMessage!,
+              style: const TextStyle(
+                fontSize: 18,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            ElevatedButton.icon(
+
+              onPressed: () {
+
+                loadRecommendation();
+                loadAvailability();
+                loadParkingMap();
+
+              },
+
+              icon: const Icon(
+                Icons.refresh,
+              ),
+
+              label: const Text(
+                "Retry",
+              ),
+
+            ),
+
+          ],
+
+        ),
+
+      )
+
+
+    : recommendation == null
+
+    ? const Center(
+
+        child: Column(
+
+          mainAxisAlignment:
+              MainAxisAlignment.center,
+
+          children: [
+
+            CircularProgressIndicator(),
+
+            SizedBox(height: 20),
+
+            Text(
+              "🚗 Finding your parking spot...",
+              style: TextStyle(
+                fontSize: 18,
+              ),
+            ),
+
+          ],
+
+        ),
+
+      )
 
 
           : Padding(
@@ -149,10 +284,10 @@ loadParkingMap();
             (mall) {
 
               return DropdownMenuItem<int>(
-                value: mall["id"],
+                value: mall.id,
 
                 child: Text(
-                  mall["name"],
+                  mall.name,
                 ),
               );
 
@@ -177,80 +312,484 @@ loadParkingMap();
 
         ),
 
-      Card(
-        elevation: 4,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+Card(
 
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  elevation: 6,
 
-            children: [
+  color: Colors.blue.shade50,
 
-              const Text(
-                "🏬 Nearby Mall",
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(18),
+  ),
+
+  child: Padding(
+
+    padding: const EdgeInsets.all(18),
+
+    child: Column(
+
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+
+      children: [
+
+        const Text(
+
+          "📊 Parking Overview",
+
+          style: TextStyle(
+
+            fontSize: 20,
+
+            fontWeight: FontWeight.bold,
+
+          ),
+
+        ),
+
+
+        const SizedBox(height: 15),
+
+
+        Row(
+
+          mainAxisAlignment:
+              MainAxisAlignment.spaceAround,
+
+          children: [
+
+
+            Column(
+
+              children: [
+
+                const Icon(
+                  Icons.local_parking,
+                  color: Colors.green,
+                  size: 35,
                 ),
-              ),
 
-              const SizedBox(height: 8),
+                const SizedBox(height: 5),
 
-              Text(
-                recommendation!["mall"] ?? "Loading...",
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+
+                Text(
+
+                  "${availability.length}",
+
+                  style: const TextStyle(
+
+                    fontSize: 24,
+
+                    fontWeight: FontWeight.bold,
+
+                  ),
+
                 ),
-              ),
 
-              const Text(
-                "Smart Parking Assistant",
-                style: TextStyle(
-                  color: Colors.grey,
+
+                const Text(
+                  "Available",
                 ),
-              ),
 
-            ],
+              ],
+
+            ),
+
+
+
+            Column(
+
+              children: [
+
+                const Icon(
+                  Icons.directions_car,
+                  color: Colors.blue,
+                  size: 35,
+                ),
+
+
+                const SizedBox(height: 5),
+
+
+                Text(
+
+                  "${parkingMap.length}",
+
+                  style: const TextStyle(
+
+                    fontSize: 24,
+
+                    fontWeight: FontWeight.bold,
+
+                  ),
+
+                ),
+
+
+                const Text(
+                  "Total Slots",
+                ),
+
+              ],
+
+            ),
+
+
+
+            Column(
+
+              children: [
+
+                Icon(
+
+                  Icons.traffic,
+
+                  color: availability.length > 5
+
+                      ? Colors.green
+
+                      : Colors.orange,
+
+                  size: 35,
+
+                ),
+
+
+                const SizedBox(height: 5),
+
+
+                Text(
+
+                  availability.length > 5
+
+                      ? "Low"
+
+                      : "Busy",
+
+                  style: const TextStyle(
+
+                    fontSize: 18,
+
+                    fontWeight: FontWeight.bold,
+
+                  ),
+
+                ),
+
+
+                const Text(
+                  "Traffic",
+                ),
+
+              ],
+
+            ),
+
+          ],
+
+        ),
+
+      ],
+
+    ),
+
+  ),
+
+),
+        const SizedBox(height: 15),
+
+Card(
+  elevation: 5,
+
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(18),
+  ),
+
+  color: Colors.blue.shade50,
+
+  child: Padding(
+    padding: const EdgeInsets.all(18),
+
+    child: Row(
+
+      children: [
+
+        Container(
+          padding: const EdgeInsets.all(12),
+
+          decoration: BoxDecoration(
+            color: Colors.blue,
+            borderRadius: BorderRadius.circular(15),
+          ),
+
+          child: const Icon(
+            Icons.local_parking,
+            color: Colors.white,
+            size: 30,
           ),
         ),
-      ),
+
+
+        const SizedBox(width: 15),
+
+
+        Column(
+
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+
+          children: [
+
+            const Text(
+              "Welcome to Thriver",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+
+            const SizedBox(height: 5),
+
+
+            Text(
+              "Finding the best parking spot for you",
+              style: TextStyle(
+                color: Colors.grey.shade700,
+              ),
+            ),
+
+          ],
+
+        ),
+
+      ],
+
+    ),
+  ),
+),
+
+      Card(
+  elevation: 6,
+
+  color: Colors.blue.shade50,
+
+  child: Padding(
+    padding: const EdgeInsets.all(20),
+
+    child: Column(
+
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+
+      children: [
+
+        Text(
+          "🏬 ${recommendation!.mall}",
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+
+        const SizedBox(height: 15),
+
+
+        Row(
+          children: [
+
+            const Icon(
+              Icons.local_parking,
+              color: Colors.green,
+            ),
+
+            const SizedBox(width: 8),
+
+            Text(
+              availability.isNotEmpty
+                  ? "${availability.length} parking slots available"
+                  : "No parking available",
+
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+
+            ),
+
+          ],
+        ),
+
+
+        const Divider(
+          height: 30,
+        ),
+
+
+        const Text(
+          "⭐ Recommended Spot",
+
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey,
+          ),
+
+        ),
+
+
+        const SizedBox(height: 8),
+
+
+        Text(
+          recommendation!.parking.slotNumber,
+
+          style: const TextStyle(
+            fontSize: 42,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+
+        ),
+
+
+        const SizedBox(height: 8),
+
+
+        Text(
+          "Floor ${recommendation!.parking.floor} • ${recommendation!.parking.zone} Zone",
+
+          style: const TextStyle(
+            fontSize: 16,
+          ),
+
+        ),
+
+
+        const SizedBox(height: 8),
+
+
+        Text(
+          "📍 ${recommendation!.distance} m away",
+
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+
+        ),
+
+      ],
+
+    ),
+
+  ),
+
+),
 
 
       const SizedBox(height: 20),
 
 
-      if (availability != null)
+      if (availability .isNotEmpty)
 
         Card(
   elevation: 4,
 
-  child: ListTile(
+  child: Padding(
+    padding: const EdgeInsets.all(16),
 
-    leading: Icon(
-      Icons.local_parking,
-      color: availability!["slots"].length > 5
-          ? Colors.green
-          : availability!["slots"].length > 0
-              ? Colors.orange
-              : Colors.red,
-      size: 35,
-    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
 
-    title: const Text(
-      "Available Parking",
-      style: TextStyle(
-        fontWeight: FontWeight.bold,
-      ),
-    ),
+      children: [
 
-    subtitle: Text(
-      availability!["slots"].length > 5
-          ? "🟢 ${availability!["slots"].length} slots ready"
-          : availability!["slots"].length > 0
-              ? "🟠 ${availability!["slots"].length} slots ready"
-              : "🔴 No slots available",
+        Row(
+          children: [
+
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: availability.isNotEmpty
+                    ? Colors.green
+                    : Colors.red,
+                shape: BoxShape.circle,
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
+            const Text(
+              "LIVE STATUS",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+
+          ],
+        ),
+
+
+        const SizedBox(height: 12),
+
+
+        Row(
+          children: [
+
+            const Icon(
+              Icons.local_parking,
+              color: Colors.blue,
+              size: 35,
+            ),
+
+            const SizedBox(width: 15),
+
+
+            Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+
+              children: [
+
+                const Text(
+                  "Available Parking",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+
+                Text(
+                  availability.isNotEmpty
+                      ? "🟢 ${availability.length} slots ready"
+                      : "🔴 No slots available",
+                  style: const TextStyle(
+                    fontSize: 16,
+                  ),
+                ),
+
+              ],
+            ),
+
+          ],
+        ),
+
+
+        const SizedBox(height: 10),
+
+
+        Text(
+          "Updated automatically every 10 seconds",
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize: 13,
+          ),
+        ),
+
+      ],
     ),
 
   ),
@@ -262,21 +801,22 @@ loadParkingMap();
 
 
       Card(
-  elevation: 6,
+  elevation: 8,
   color: Colors.blue.shade50,
+
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(20),
+  ),
 
   child: Padding(
     padding: const EdgeInsets.all(20),
 
     child: Column(
 
-      crossAxisAlignment:
-          CrossAxisAlignment.center,
-
       children: [
 
         const Text(
-          "⭐ YOUR PARKING SPOT",
+          "⭐ AI RECOMMENDED PARKING",
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -287,49 +827,149 @@ loadParkingMap();
         const SizedBox(height: 15),
 
 
-        Text(
-          recommendation!["parking"]["slot"]??'N/A',
-          style: const TextStyle(
-            fontSize: 45,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
+        Container(
+
+          padding: const EdgeInsets.all(15),
+
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
           ),
+
+          child: Column(
+
+            children: [
+
+              Text(
+                recommendation!.parking.slotNumber,
+                style: const TextStyle(
+                  fontSize: 50,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+
+
+              const SizedBox(height: 10),
+
+
+              Text(
+                "🏢 Floor ${recommendation!.parking.floor}",
+                style: const TextStyle(
+                  fontSize: 18,
+                ),
+              ),
+
+
+              Text(
+                "📍 ${recommendation!.parking.zone} Zone",
+                style: const TextStyle(
+                  fontSize: 18,
+                ),
+              ),
+
+
+              const SizedBox(height: 10),
+
+
+              Text(
+                "🚶 ${recommendation!.distance} m away",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+            ],
+
+          ),
+
         ),
 
 
-        const SizedBox(height: 10),
+        const SizedBox(height: 20),
 
 
-        Text(
-          "Floor ${recommendation!["parking"]["floor"]??'N/A'}",
-          style: const TextStyle(
-            fontSize: 18,
+        const Align(
+
+          alignment: Alignment.centerLeft,
+
+          child: Text(
+            "Why this spot?",
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
           ),
+
         ),
 
 
-        Text(
-          "${recommendation!["parking"]["zone"]??'N/A'} Zone",
-          style: const TextStyle(
-            fontSize: 18,
+        const SizedBox(height: 8),
+
+
+        const Align(
+
+          alignment: Alignment.centerLeft,
+
+          child: Column(
+
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+
+            children: [
+
+              Text("✓ Closest available slot"),
+
+              Text("✓ Low walking distance"),
+
+              Text("✓ Best route selected"),
+
+            ],
+
           ),
+
         ),
 
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 15),
 
 
-        Text(
-          "📍 ${recommendation!["distance"]??0} m away",
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+        Container(
+
+          padding: const EdgeInsets.symmetric(
+            horizontal: 15,
+            vertical: 8,
           ),
+
+          decoration: BoxDecoration(
+
+            color: Colors.green.shade100,
+
+            borderRadius:
+                BorderRadius.circular(20),
+
+          ),
+
+          child: const Text(
+
+            "AI Confidence: 94%",
+
+            style: TextStyle(
+              color: Colors.green,
+              fontWeight: FontWeight.bold,
+            ),
+
+          ),
+
         ),
 
       ],
+
     ),
+
   ),
+
 ),
 
 
@@ -341,6 +981,41 @@ loadParkingMap();
     fontSize: 18,
     fontWeight: FontWeight.bold,
   ),
+),
+Row(
+
+  mainAxisAlignment:
+      MainAxisAlignment.spaceBetween,
+
+  children: [
+
+    const Text(
+      "Available Only",
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+
+
+    Switch(
+
+      value: showAvailableOnly,
+
+      onChanged: (value){
+
+        setState((){
+
+          showAvailableOnly = value;
+
+        });
+
+      },
+
+    ),
+
+  ],
+
 ),
 DropdownButton<int>(
 
@@ -378,68 +1053,307 @@ DropdownButton<int>(
 ),
 
 const SizedBox(height: 10),
+const Text(
+  "Legend",
+  style: TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+  ),
+),
 
+const SizedBox(height: 10),
+
+Wrap(
+  spacing: 20,
+  children: const [
+
+    Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.square, color: Colors.green),
+        SizedBox(width: 5),
+        Text("Available"),
+      ],
+    ),
+
+    Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.square, color: Colors.red),
+        SizedBox(width: 5),
+        Text("Occupied"),
+      ],
+    ),
+
+    Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.square, color: Colors.blue),
+        SizedBox(width: 5),
+        Text("Recommended"),
+      ],
+    ),
+  ],
+),
+
+const SizedBox(height: 20),
 
 Card(
   elevation: 4,
 
   child: SizedBox(
     height: 350,
-
+child:Container(
+  decoration: BoxDecoration(
+    color: Colors.grey.shade100,
+    borderRadius: BorderRadius.circular(10),
+  ),
     child: Stack(
 
-      children: parkingMap
-        .where(
-          (slot) =>
-              slot["floor"] == selectedFloor,
-        )
+  children: [
+
+    Positioned(
+      top: 10,
+      left: 20,
+      child: Text(
+        "🚪 Entrance",
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.grey.shade700,
+        ),
+      ),
+    ),
+
+    Positioned(
+      top: 160,
+      left: 0,
+      right: 0,
+      child: Container(
+        height: 35,
+        color: Colors.grey.shade300,
+        alignment: Alignment.center,
+        child: const Text(
+          "Driving Lane",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    ),
+
+    Positioned(
+      bottom: 10,
+      left: 20,
+      child: Text(
+        recommendation!.parking.zone,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.grey,
+        ),
+      ),
+    ),
+
+    ...parkingMap
+    .where(
+      (slot) =>
+          slot.floor == selectedFloor &&
+          (!showAvailableOnly ||
+           slot.status == "available"),
+    )
         .map<Widget>((slot) {
-        Color color;
 
-        if (slot["status"] == "available") {
-          color = Colors.green;
-        } else {
-          color = Colors.red;
-        }
+      Color color;
+
+      if (slot.status == "available") {
+        color = Colors.green;
+      } else {
+        color = Colors.red;
+      }
+
+      if (recommendation != null &&
+          recommendation!.parking.slotNumber == slot.slotNumber) {
+        color = Colors.blue;
+      }
+      final bool isRecommended =
+    recommendation!.parking.slotNumber == slot.slotNumber;
+
+      return Positioned(
+  left: (slot.xCoordinate * 8.0) - 20,
+  top: (slot.yCoordinate * 6.0) - 20,
+
+  child: GestureDetector(
+
+    onTap: () {
+
+      setState(() {
+
+        selectedSlot = slot;
+
+      });
+
+    },
+
+        child: Container(
+          width: 60,
+          height: 45,
+
+          decoration: BoxDecoration(
+
+  color: color,
+
+  borderRadius: BorderRadius.circular(8),
 
 
-        if (
-          recommendation != null &&
-          recommendation!["parking"]["slot"] == slot["slot"]
-        ) {
-          color = Colors.blue;
-        }
+  border: selectedSlot != null &&
+          selectedSlot!.slotNumber == slot.slotNumber
+
+      ? Border.all(
+          color: Colors.yellow,
+          width: 4,
+        )
+
+      : isRecommended
+          ? Border.all(
+              color: Colors.blueAccent,
+              width: 3,
+            )
+
+          : null,
 
 
-        return Positioned(
+  boxShadow:
 
-          left: (slot["x"] * 8.0) - 20,
-top: (slot["y"] * 6.0) - 20,
+      selectedSlot != null &&
+              selectedSlot!.slotNumber == slot.slotNumber
+
+          ? [
+
+              BoxShadow(
+                color: Colors.yellow.withOpacity(0.6),
+                blurRadius: 12,
+                spreadRadius: 3,
+              )
+
+            ]
+
+          : isRecommended
+
+              ? [
+
+                  BoxShadow(
+                    color: Colors.blue.withOpacity(0.6),
+                    blurRadius: 15,
+                    spreadRadius: 4,
+                  )
+
+                ]
+
+              : null,
+
+),
+
+          child: Stack(
+  alignment: Alignment.center,
+
+  children: [
+
+    Text(
+      slot.slotNumber,
+      style: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
 
 
-          child: Container(
+    if (isRecommended)
 
-            width: 60,
-            height: 45,
+      const Positioned(
+        top: -10,
+        right: -5,
+
+        child: Text(
+          "⭐",
+          style: TextStyle(
+            fontSize: 18,
+          ),
+        ),
+
+      ),
+
+  ],
+),
+        ),
+  )
+      );
+
+    }),
+
+  ],
+
+),
+  ),
+
+  ),
+
+),
 
 
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius:
-                  BorderRadius.circular(8),
+const SizedBox(height: 20),
+if (selectedSlot != null)
+
+  Card(
+
+    elevation: 6,
+
+    color: Colors.white,
+
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(15),
+    ),
+
+    child: Padding(
+
+      padding: const EdgeInsets.all(16),
+
+      child: Column(
+
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+
+        children: [
+
+          const Text(
+
+            "🚗 Selected Parking Slot",
+
+            style: TextStyle(
+
+              fontSize: 18,
+
+              fontWeight: FontWeight.bold,
+
             ),
 
+          ),
 
-            child: Center(
 
-              child: Text(
-                slot["slot"],
+          const SizedBox(height: 15),
 
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight:
-                      FontWeight.bold,
-                ),
+
+          Center(
+
+            child: Text(
+
+              selectedSlot!.slotNumber,
+
+              style: const TextStyle(
+
+                fontSize: 45,
+
+                fontWeight: FontWeight.bold,
+
+                color: Colors.blue,
 
               ),
 
@@ -447,9 +1361,272 @@ top: (slot["y"] * 6.0) - 20,
 
           ),
 
-        );
 
-      }).toList(),
+          const SizedBox(height: 10),
+
+
+          Text(
+
+            selectedSlot!.status == "available"
+
+                ? "🟢 Available"
+
+                : "🔴 Occupied",
+
+            style: TextStyle(
+
+              fontSize: 17,
+
+              color: selectedSlot!.status == "available"
+
+                  ? Colors.green
+
+                  : Colors.red,
+
+              fontWeight: FontWeight.bold,
+
+            ),
+
+          ),
+
+
+          const SizedBox(height: 8),
+
+
+          Text(
+
+            "🏢 Floor ${selectedSlot!.floor}",
+
+            style: const TextStyle(
+
+              fontSize: 16,
+
+            ),
+
+          ),
+
+
+          Text(
+
+            "📍 Zone ${selectedSlot!.zone}",
+
+            style: const TextStyle(
+
+              fontSize: 16,
+
+            ),
+
+          ),
+
+
+          const SizedBox(height: 15),
+
+
+          SizedBox(
+
+            width: double.infinity,
+
+            child: ElevatedButton.icon(
+
+              onPressed: selectedSlot!.status == "available"
+
+                  ? () {
+
+                      ScaffoldMessenger.of(context)
+
+                          .showSnackBar(
+
+                        SnackBar(
+
+                          content: Text(
+
+                            "Slot ${selectedSlot!.slotNumber} reserved!",
+
+                          ),
+
+                        ),
+
+                      );
+
+                    }
+
+                  : null,
+
+
+              icon: const Icon(
+
+                Icons.bookmark,
+
+              ),
+
+
+              label: const Text(
+
+                "Reserve Slot",
+
+              ),
+
+            ),
+
+          ),
+
+        ],
+
+      ),
+
+    ),
+
+  ),
+      Card(
+
+  elevation: 5,
+
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(18),
+  ),
+
+  child: Padding(
+
+    padding: const EdgeInsets.all(18),
+
+    child: Column(
+
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+
+      children: [
+
+        const Text(
+
+          "🧭 Navigation",
+
+          style: TextStyle(
+
+            fontSize: 20,
+
+            fontWeight: FontWeight.bold,
+
+          ),
+
+        ),
+
+
+        const SizedBox(height: 15),
+
+
+
+        ...recommendation!.navigation
+            .asMap()
+            .entries
+            .map<Widget>((entry) {
+
+
+          int index = entry.key;
+
+          String step = entry.value;
+
+
+          return Padding(
+
+            padding:
+                const EdgeInsets.only(bottom: 15),
+
+
+            child: Row(
+
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+
+
+              children: [
+
+
+                Column(
+
+                  children: [
+
+
+                    CircleAvatar(
+
+                      radius: 16,
+
+                      backgroundColor:
+                          index == recommendation!.navigation.length - 1
+
+                              ? Colors.green
+
+                              : Colors.blue,
+
+
+                      child: Icon(
+
+                        index == recommendation!.navigation.length - 1
+
+                            ? Icons.flag
+
+                            : Icons.arrow_forward,
+
+                        color: Colors.white,
+
+                        size: 18,
+
+                      ),
+
+                    ),
+
+
+
+                    if(index != recommendation!.navigation.length - 1)
+
+                    Container(
+
+                      width: 2,
+
+                      height: 35,
+
+                      color: Colors.blue.shade200,
+
+                    ),
+
+                  ],
+
+                ),
+
+
+
+                const SizedBox(width: 15),
+
+
+
+                Expanded(
+
+                  child: Text(
+
+                    step,
+
+                    style: const TextStyle(
+
+                      fontSize: 16,
+
+                      fontWeight: FontWeight.w500,
+
+                    ),
+
+                  ),
+
+                ),
+
+
+              ],
+
+            ),
+
+          );
+
+
+        }),
+
+      ],
 
     ),
 
@@ -458,32 +1635,7 @@ top: (slot["y"] * 6.0) - 20,
 ),
 
 
-const SizedBox(height: 20),
-
-      const Text(
-        "🧭 Route",
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-
-
-      ...recommendation!["navigation"]
-          .map<Widget>(
-            (step) => Padding(
-              padding:
-                  const EdgeInsets.only(top: 5),
-
-              child: Text(
-                step,
-                style: const TextStyle(
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          )
-          .toList(),
+      
 
 
       const SizedBox(height: 20),
@@ -492,9 +1644,10 @@ const SizedBox(height: 20),
       ElevatedButton.icon(
 
         onPressed: () {
-          loadRecommendation();
-          loadAvailability();
-        },
+  loadRecommendation();
+  loadAvailability();
+  loadParkingMap();
+},
 
         icon: const Icon(Icons.refresh),
 
